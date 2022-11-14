@@ -1,0 +1,126 @@
+---
+title: "Activity 8"
+author: "Adith Gopal"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+  html_notebook: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+This is an R Markdown file that will briefly summarize some things done in STAT 184, under Professor Neil Hatfield. Some things summarized will be the Collatz Conjecture and some findings from the Diamonds dataset. Throughout the document will be sections of code to support the written text.
+
+To end the file, I will also discuss things I've learned so far from taking STAT 184.
+
+# Exploring the Collatz Conjecture
+
+In class, we discussed what the Collatz Conjecture. From the Collatz Conjecture, we can take a positive integer and repeat two arithmetic operations on it until the integer turns into 1. 
+
+If the integer is even, then divide it by 2. If the integer is odd, then multiply it by 3, and add 1 to it. If the integer is 1, then there is no need to apply any arithmetic operation to it. 
+
+We can calculate "stopping times" for the Collatz Conjecture. A stopping time measures how many operations need to be done on an integer to get it to 1. For example, the stopping time for the integer 3 is 7, as seen below:
+
+```{r}
+getCollatz <- function(n){
+  if (n == 1){
+    return(0)
+  }else if (n %% 2 == 0){
+    return(1 + getCollatz(n/2)) #"1+" serves as a counter without using a counter variable. Using a counter variable in a recursive function doesn't work     because it always resets.
+  }else {
+    return(1+getCollatz(3*n+1))
+  }
+
+}
+
+getCollatz(3)
+```
+Knowing this, we can find the distribution of stopping times for the first 10,000 positive integers. We can find this through the code chunk below:
+
+```{r}
+library(ggplot2)
+stopping_values <- sapply(1:10000, getCollatz, simplify = TRUE, USE.NAMES = TRUE) #running the collatz conjecture for the first 10,000 positive integers, storing the stopping times
+ggplot() + 
+  geom_histogram(aes(stopping_values), color  = "blue", fill = "white", bins = 50) #creating the histogram using ggplot
+```
+
+From the histogram above, we see that the distribution of stopping times for the first 10,000 positive integers ranges from 0 to roughly 250, with the most frequent stopping value being around 50.
+
+# Exploring the Price of Diamonds
+
+In this class, we also conducted some exploratory data analysis on a diamonds dataset, which contained information about individual diamonds. Below is some code that visualizes the relationship between the Depth of a diamond and the Price of a diamond:
+
+```{r}
+data(diamonds)
+ggplot(diamonds) +
+  aes(x = depth, y = price) + #framework of visualization
+  geom_point(shape = "circle", size = 1.3, colour = "#112446") + #points to be plotted
+  labs( #labels
+    x = "Depth of Diamond",
+    y = "Price of Diamond ($)",
+    title = "Depth of Diamond vs Price of Diamond in USD,
+    Labeled by Diamond Cut",
+  ) +
+  theme_bw() + #bw theme added
+  theme(
+    plot.title = element_text(size = 13L, #title font settings
+                              face = "bold",
+                              hjust = 0.5),
+    plot.caption = element_text(size = 12L, #caption font settings
+                                hjust = 1),
+    axis.title.y = element_text(size = 13L, #y-axis font settings
+                                face = "bold"),
+    axis.title.x = element_text(size = 13L, #x-axis font settings
+                                face = "bold")
+  ) +
+  facet_wrap(vars(cut)) #facet is the cut of the diamond
+```
+One thing we learn about the price of the diamonds is that the "better" the Depth of a diamond is (as in the higher quality a diamond is), the more consistent prices remain for a diamond. When comparing the prices of Fair diamonds to Ideal diamonds, there is a much bigger price spread for Fair diamonds. This indicates that a poorer quality diamond can heavily influence the price of the diamond.
+
+We can learn additional information about the Diamonds dataset by utilizing other forms of data visualization. While we used charts above, we represent some data from the diamond using a table, shown below:
+```{r}
+
+library(dplyr)
+library(knitr)
+library(kableExtra)
+library(janitor)
+diamonds %>%
+  group_by(z) %>% #making sure table is for depth z
+  group_by(cut) %>% #making sure table shows stats by the type of cut
+  summarize (
+    count = n(),
+    Minimum = min(z, na.rm = TRUE),
+    First_Quintile = quantile(z, probs = 0.2, na.rm = TRUE), 
+    Second_Quintile = quantile(z, probs = 0.4, na.rm = TRUE),
+    Median = median(z, na.rm = TRUE),
+    Third_Quintile = quantile(z, probs = 0.6, na.rm = TRUE),
+    Fourth_Quintile = quantile(z, probs = 0.8, na.rm = TRUE),
+    Maximum = max(z, na.rm = TRUE),
+    Mean = mean(z, na.rm = TRUE),
+    Standard_Deviation = sd(z)
+  ) %>%
+  kable(
+    caption = "Summary for Diamonds of Depth Z, grouped by Cut",
+    booktabs = TRUE,
+    align = c("l", rep("c", 6))
+  ) %>%
+  kableExtra::kable_styling(
+    bootstrap_options = c("basic", "striped", "condensed"),
+    font_size = 16
+  )
+```
+The values in the table are grouped by cut, for depth z. We find that, in this dataset, Ideal cut diamonds are the most common, with Premium cut and Very Good cut coming in behind. We also see that the standard deviation is largest for Very Good and Premium diamonds.  
+
+# What I Learned in STAT 184
+
+Overall, I learned a lot from STAT 184. From the beginning of class to the current day, I learned the fundamentals of the R programming language, along with how to apply it to datasets of different sizes and formats. Shown with this activity, I am also learning how to combine R code with narrative text in an Rmd file, with the purpose of being able to explain my findings to a non-statistical/non-technical person, such as a client, or a higher-up decision maker. 
+
+Besides coding in R, from this class, I also learned programming and organizational skills that can be translated to other programming languages, and even other professional industries. For example, I learned how to make a detailed plan before programming. While that doesn't sound significant, I found that having a plan made my code much more efficient, while I would spend less time debugging. 
+
+Overall, this class taught me fundamental principles in R, how to apply those principles to real-life situations, and other organizational skills that translate to other languages, not just R.
